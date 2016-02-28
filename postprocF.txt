@@ -1,0 +1,46 @@
+uniform sampler2D OccludingFBO;
+uniform sampler2D ColorFBO;
+
+uniform vec2 lightScreenPosition;
+//int NUM_SAMPLES = 100;
+//const float DECAY = 1.0;
+//const float EXPOSURE = 0.0225;
+//const float WEIGHT = 0.75;
+//const float DENSITY = 1.0;
+
+int NUM_SAMPLES = 150;
+const float DECAY = 1.0;
+const float EXPOSURE = 0.0555;
+const float WEIGHT = 0.75;
+const float DENSITY = 1.0;
+
+void main(void) 
+{
+	vec2 deltaTextCoord = vec2( gl_TexCoord[0].st - lightScreenPosition.xy );
+
+ 	vec2 textCoo = gl_TexCoord[0].st;
+
+ 	deltaTextCoord *= 1.0 /  float(NUM_SAMPLES) * DENSITY ;
+
+	vec4 color = texture2D(OccludingFBO, textCoo);
+	vec4 color2 = texture2D(ColorFBO, textCoo);	
+
+ 	float illuminationDecay = 1.0;
+
+ 	for(int i=0; i < NUM_SAMPLES ; i++)
+  	{
+    	textCoo -= deltaTextCoord;
+
+    	vec4 sample = texture2D(OccludingFBO, textCoo);
+    			
+    	sample *= illuminationDecay * WEIGHT;
+    			
+    	color += sample;
+    			
+    	illuminationDecay *= DECAY;
+ 	}
+
+	vec4 final = color2 + (color * EXPOSURE);
+
+ 	gl_FragColor = clamp(final, vec4(0), vec4(1));
+}
